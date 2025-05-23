@@ -118,7 +118,7 @@ export default function Home() {
             animate="show"
           >
             <motion.div
-              className="grid gap-1 bg-gray-200 p-6 rounded-lg h-40"
+              className="grid gap-1 bg-gray-200 dark:bg-gray-700 p-6 rounded-lg h-40"
               variants={item}
             >
               <div className="flex items-center gap-2">
@@ -131,7 +131,7 @@ export default function Home() {
               </p>
             </motion.div>
             <motion.div
-              className="grid gap-1 bg-gray-200 p-6 rounded-lg h-45"
+              className="grid gap-1 bg-gray-200 dark:bg-gray-700 p-6 rounded-lg h-45"
               variants={item}
             >
               <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export default function Home() {
               </p>
             </motion.div>
             <motion.div
-              className="grid gap-1 bg-gray-200 p-6 rounded-lg h-40"
+              className="grid gap-1 bg-gray-200 dark:bg-gray-700 p-6 rounded-lg h-40"
               variants={item}
             >
               <div className="flex items-center gap-2">
