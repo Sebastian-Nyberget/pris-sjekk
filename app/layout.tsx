@@ -1,51 +1,50 @@
-import { type Metadata } from 'next'
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from '@clerk/nextjs'
-import { Geist, Geist_Mono } from 'next/font/google'
-import './globals.css'
+import { type Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import { Geist, Geist_Mono } from "next/font/google";
+import Header from "@/components/header";
+import { ThemeProvider } from "@/components/theme-provider";
+import "./globals.css";
+import Footer from "@/components/footer";
 
 const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
 const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: 'PrisSjekk',
-  description: 'Sammenlign priser, følg med på tilbud og få varsler når prisene faller. Prissjekk hjelper deg å handle smart og spare penger – helt gratis!',
-}
+  title: "PrisSjekk",
+  description:
+    "Sammenlign priser, følg med på tilbud og få varsler når prisene faller. Prissjekk hjelper deg å handle smart og spare penger – helt gratis!",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
-          {children}
+        <body className={`${geistSans.variable} ${geistMono.variable}`}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex flex-1 w-full">{children}</main>
+              <Footer />
+            </div>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
-  )
+  );
 }
