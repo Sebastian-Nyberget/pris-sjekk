@@ -1,5 +1,6 @@
 import { type Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { nbNO } from "@clerk/localizations";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -28,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={nbNO}>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <ThemeProvider
