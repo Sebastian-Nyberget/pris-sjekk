@@ -1,4 +1,4 @@
-// API configuration and client
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const API_BASE_URL = "https://kassal.app/api/v1";
 const BEARER_TOKEN = "TKdbtmJD9ENaWY60jp4b7qLZBXyztugzKENQUIQJ";
 
@@ -65,5 +65,4 @@ export class ApiClient {
   }
 }
 
-// Export a default instance
 export const apiClient = new ApiClient();
