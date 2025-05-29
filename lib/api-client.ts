@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const API_BASE_URL = "https://kassal.app/api/v1";
 const BEARER_TOKEN = "TKdbtmJD9ENaWY60jp4b7qLZBXyztugzKENQUIQJ";
 
@@ -42,25 +41,25 @@ export class ApiClient {
     }
   }
 
-  async getProducts(page = 1, size = 50): Promise<any> {
+  async getProducts(page = 1, size = 50): Promise<unknown> {
     return this.request(`/products?size=${size}&page=${page}`);
   }
 
-  async searchProducts(query: string, page = 1, size = 50): Promise<any> {
+  async searchProducts(query: string, page = 1, size = 50): Promise<unknown> {
     return this.request(
       `/products?search=${encodeURIComponent(query)}&size=${size}&page=${page}`
     );
   }
 
-  async getProduct(id: number): Promise<any> {
+  async getProduct(id: number): Promise<unknown> {
     return this.request(`/products/${id}`);
   }
 
-  async getCategories(): Promise<any> {
+  async getCategories(): Promise<unknown> {
     return this.request("/categories");
   }
 
-  async getStores(): Promise<any> {
+  async getStores(): Promise<unknown> {
     return this.request("/stores");
   }
 }

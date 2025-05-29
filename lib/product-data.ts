@@ -65,10 +65,13 @@ export interface ApiResponse {
 
 export async function fetchProducts(page = 1, size = 50): Promise<ApiResponse> {
   try {
-    const data = await apiClient.getProducts(page, size);
+    const response = (await apiClient.getProducts(page, size)) as unknown as ApiResponse;
+    const data = response.data || [];
+    const meta = response?.meta || undefined;
+
     return {
-      data: data?.data || [],
-      meta: data?.meta || undefined,
+      data,
+      meta,
     };
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -82,10 +85,14 @@ export async function searchProducts(
   size = 50
 ): Promise<ApiResponse> {
   try {
-    const data = await apiClient.searchProducts(query, page, size);
+    const response = (await apiClient.searchProducts(query, page, size)) as unknown as ApiResponse;
+    const data = response.data || [];
+    const meta = response.meta || undefined;
+
+
     return {
-      data: data?.data || [],
-      meta: data?.meta || undefined,
+      data,
+      meta,
     };
   } catch (error) {
     console.error("Error searching products:", error);
