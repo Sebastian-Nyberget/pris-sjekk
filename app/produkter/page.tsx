@@ -1,139 +1,108 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import {
-  Bookmark,
-  Filter,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProductCard } from "@/components/product-card";
-import { PriceHistoryChart } from "@/components/price-history-chart";
-import {
-  fetchProducts,
-  searchProducts,
-  type Product,
-  type ApiResponse,
-  fallbackProducts,
-} from "@/lib/product-data";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useState, useEffect, useCallback } from "react"
+import { motion } from "framer-motion"
+import { Bookmark, Filter, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ProductCard } from "@/components/product-card"
+import { PriceHistoryChart } from "@/components/price-history-chart"
+import { Pagination } from "@/components/pagination"
+import { fetchProducts, searchProducts, type Product, type ApiResponse, fallbackProducts } from "@/lib/product-data"
+import { useDebounce } from "@/hooks/use-debounce"
+import { useBookmarks } from "@/hooks/use-bookmarks"
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Alt");
-  const [selectedStore, setSelectedStore] = useState("Alt");
-  const [bookmarkedProducts, setBookmarkedProducts] = useState<number[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedStore, setSelectedStore] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalProducts, setTotalProducts] = useState(0)
+  const { bookmarkedProducts, toggleBookmark } = useBookmarks()
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
-  // Load products
   const loadProducts = useCallback(async (page = 1, search?: string) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     try {
-      let response: ApiResponse;
+      let response: ApiResponse
 
       if (search && search.trim()) {
-        response = await searchProducts(search.trim(), page, 50);
+        response = await searchProducts(search.trim(), page, 50)
       } else {
-        response = await fetchProducts(page, 50);
+        response = await fetchProducts(page, 50)
       }
 
-      setProducts(response.data || []);
+      setProducts(response.data || [])
 
-      // Handle pagination metadata if available
       if (response.meta) {
-        setTotalPages(response.meta.last_page || 1);
-        setTotalProducts(response.meta.total || 0);
+        setTotalPages(response.meta.last_page || 1)
+        setTotalProducts(response.meta.total || 0)
       } else {
-        // Estimate pagination if no meta data
-        setTotalPages(response.data.length === 50 ? page + 1 : page);
-        setTotalProducts(response.data.length);
+        setTotalPages(response.data.length === 50 ? page + 1 : page)
+        setTotalProducts(response.data.length)
       }
     } catch (err) {
-      console.error("Failed to load products:", err);
-      setError("Failed to load products. Using fallback data.");
-      setProducts(fallbackProducts);
-      setTotalPages(1);
-      setTotalProducts(fallbackProducts.length);
+      console.error("Failed to load products:", err)
+      setError("Kunne ikke laste produkter. Bruker reservedata.")
+      setProducts(fallbackProducts)
+      setTotalPages(1)
+      setTotalProducts(fallbackProducts.length)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
-  // Initial load
   useEffect(() => {
-    loadProducts(1);
-  }, [loadProducts]);
+    loadProducts(1)
+  }, [loadProducts])
 
-  // Handle search
+  // Søkefunksjon
   useEffect(() => {
-    if (debouncedSearchQuery !== searchQuery) return;
-    setCurrentPage(1);
-    loadProducts(1, debouncedSearchQuery);
-  }, [debouncedSearchQuery, loadProducts]);
+    if (debouncedSearchQuery !== searchQuery) return
+    setCurrentPage(1)
+    loadProducts(1, debouncedSearchQuery)
+  }, [debouncedSearchQuery, loadProducts, searchQuery])
 
-  // Handle page change
+  // Håndtere sider
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    loadProducts(page, debouncedSearchQuery);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    if (page === currentPage || loading) return
 
-  // Get unique categories and stores from current products
+    setCurrentPage(page)
+    loadProducts(page, debouncedSearchQuery)
+
+    // Scroll til toppen av produktlisten
+    const productSection = document.querySelector("[data-products-section]")
+    if (productSection) {
+      productSection.scrollIntoView({ behavior: "smooth", block: "start" })
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
+
+  // Hente kategorier og butikker for filtrering
   const categories = [
-    "Alt",
-    ...new Set(
-      (products || []).flatMap((product) =>
-        (product.category || []).map((cat) => cat.name)
-      )
-    ),
-  ];
-  const stores = [
-    "Alt",
-    ...new Set(
-      (products || []).map((product) => product.store?.name).filter(Boolean)
-    ),
-  ];
+    "all",
+    ...new Set((products || []).flatMap((product) => (product.category || []).map((cat) => cat.name))),
+  ]
+  const stores = ["all", ...new Set((products || []).map((product) => product.store?.name).filter(Boolean))]
 
-  // Filter products based on category and store (client-side filtering)
   const filteredProducts = (products || []).filter((product) => {
     const categoryMatch =
-      selectedCategory === "Alt" ||
-      (product.category || []).some((cat) => cat.name === selectedCategory);
-    const storeMatch =
-      selectedStore === "Alt" || product.store?.name === selectedStore;
-    return categoryMatch && storeMatch;
-  });
-
-  const toggleBookmark = (productId: number) => {
-    setBookmarkedProducts((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
-    );
-  };
+      selectedCategory === "all" || (product.category || []).some((cat) => cat.name === selectedCategory)
+    const storeMatch = selectedStore === "all" || product.store?.name === selectedStore
+    return categoryMatch && storeMatch
+  })
 
   const container = {
     hidden: { opacity: 0 },
@@ -143,28 +112,28 @@ export default function ProductsPage() {
         staggerChildren: 0.1,
       },
     },
-  };
+  }
 
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 },
-  };
+  }
 
   if (loading && products.length === 0) {
     return (
-      <div className="container py-8 w-full flex flex-col items-center bg-red min-w-full">
+      <div className="container py-8">
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p>Loading products...</p>
+            <p>Laster produkter...</p>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="container px-12 py-8 w-full max-w-full flex items-center">
+    <div className="container py-8 flex flex-col items-center w-full max-w-full">
       <motion.div
         className="flex flex-col space-y-4"
         initial={{ opacity: 0, y: 20 }}
@@ -175,25 +144,24 @@ export default function ProductsPage() {
           <div>
             <h1 className="text-3xl font-bold">Produkter</h1>
             <p className="text-muted-foreground">
-              Bla gjennom og sammenlign priser på tvers av flere butikker
-              {totalProducts > 0 &&
-                ` • ${totalProducts.toLocaleString()} produkter tiljengelig`}
+              Bla gjennom og sammenlign priser på tvers av butikker
+              {totalProducts > 0 && ` • ${totalProducts.toLocaleString()} produkter tilgjengelig`}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
               <Filter className="h-4 w-4 mr-2" />
-              Filtrer
+              Filtre
             </Button>
             <Select value={selectedStore} onValueChange={setSelectedStore}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select store" />
+                <SelectValue placeholder="Velg butikk" />
               </SelectTrigger>
               <SelectContent>
                 {stores.map((store) => (
                   <SelectItem key={store} value={store}>
-                    {store}
+                    {store === "all" ? "Alle butikker" : store}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -217,25 +185,23 @@ export default function ProductsPage() {
                 {categories.map((category) => (
                   <Button
                     key={category}
-                    variant={
-                      selectedCategory === category ? "default" : "ghost"
-                    }
+                    variant={selectedCategory === category ? "default" : "ghost"}
                     className="w-full justify-start"
                     onClick={() => setSelectedCategory(category)}
                   >
-                    {category}
+                    {category === "all" ? "Alle kategorier" : category}
                   </Button>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          <div className="space-y-6">
+          <div className="space-y-6" data-products-section>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Søk etter produkt..."
+                placeholder="Søk etter produkter..."
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -247,21 +213,51 @@ export default function ProductsPage() {
               )}
             </div>
 
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={loading || currentPage <= 1}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Forrige side
+              </Button>
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">Side {currentPage}</div>
+
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                Neste side
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
             <Tabs defaultValue="grid">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
                   Viser {(filteredProducts || []).length} produkter
-                  {selectedCategory !== "Alt" || selectedStore !== "Alt"
-                    ? " (filtered)"
-                    : ""}
+                  {selectedCategory !== "all" || selectedStore !== "all" ? " (filtrert)" : ""}
                 </p>
                 <TabsList>
-                  <TabsTrigger value="grid">Grid</TabsTrigger>
-                  <TabsTrigger value="list">List</TabsTrigger>
+                  <TabsTrigger value="grid">Rutenett</TabsTrigger>
+                  <TabsTrigger value="list">Liste</TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="grid" className="mt-6">
+              <TabsContent value="grid" className="mt-6 relative">
+                {loading && (
+                  <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                      <span>Laster produkter...</span>
+                    </div>
+                  </div>
+                )}
                 <motion.div
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
                   variants={container}
@@ -281,22 +277,14 @@ export default function ProductsPage() {
               </TabsContent>
 
               <TabsContent value="list" className="mt-6">
-                <motion.div
-                  className="space-y-4"
-                  variants={container}
-                  initial="hidden"
-                  animate="show"
-                >
+                <motion.div className="space-y-4" variants={container} initial="hidden" animate="show">
                   {(filteredProducts || []).map((product) => (
                     <motion.div key={product.id} variants={item}>
                       <Card>
                         <div className="flex flex-col md:flex-row">
                           <div className="md:w-48 p-4 flex items-center justify-center">
                             <img
-                              src={
-                                product.image ||
-                                "/placeholder.svg?height=200&width=200"
-                              }
+                              src={product.image || "/placeholder.svg?height=200&width=200"}
                               alt={product.name}
                               className="h-32 w-32 object-contain"
                             />
@@ -304,40 +292,27 @@ export default function ProductsPage() {
                           <CardContent className="flex-1 p-6">
                             <div className="flex justify-between">
                               <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  {product.brand}
-                                </p>
-                                <h3 className="text-lg font-semibold">
-                                  {product.name}
-                                </h3>
+                                <p className="text-sm font-medium text-muted-foreground">{product.brand}</p>
+                                <h3 className="text-lg font-semibold">{product.name}</h3>
                                 <div className="flex items-center mt-2 space-x-2">
-                                  <Badge variant="outline">
-                                    {product.store?.name}
-                                  </Badge>
-                                  {(product.category || [])
-                                    .slice(0, 2)
-                                    .map((cat) => (
-                                      <Badge key={cat.id} variant="secondary">
-                                        {cat.name}
-                                      </Badge>
-                                    ))}
+                                  <Badge variant="outline">{product.store?.name}</Badge>
+                                  {(product.category || []).slice(0, 2).map((cat) => (
+                                    <Badge key={cat.id} variant="secondary">
+                                      {cat.name}
+                                    </Badge>
+                                  ))}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="text-2xl font-bold">
-                                  {product.current_price} kr
-                                </p>
+                                <p className="text-2xl font-bold">{product.current_price} kr</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {product.current_unit_price} kr/
-                                  {product.weight_unit}
+                                  {product.current_unit_price} kr/{product.weight_unit}
                                 </p>
                               </div>
                             </div>
                             {(product.price_history || []).length > 0 && (
                               <div className="mt-4">
-                                <PriceHistoryChart
-                                  priceHistory={product.price_history}
-                                />
+                                <PriceHistoryChart priceHistory={product.price_history} />
                               </div>
                             )}
                           </CardContent>
@@ -346,21 +321,13 @@ export default function ProductsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => toggleBookmark(product.id)}
-                              className={
-                                bookmarkedProducts.includes(product.id)
-                                  ? "text-primary"
-                                  : ""
-                              }
+                              className={bookmarkedProducts.includes(product.id) ? "text-primary" : ""}
                             >
                               <Bookmark
                                 className="h-5 w-5"
-                                fill={
-                                  bookmarkedProducts.includes(product.id)
-                                    ? "currentColor"
-                                    : "none"
-                                }
+                                fill={bookmarkedProducts.includes(product.id) ? "currentColor" : "none"}
                               />
-                              <span className="sr-only">Bookmark</span>
+                              <span className="sr-only">Bokmerke</span>
                             </Button>
                             <Button>Se detaljer</Button>
                           </div>
@@ -372,62 +339,30 @@ export default function ProductsPage() {
               </TabsContent>
             </Tabs>
 
-            {/* Pagination */}
+            {/* Paginering */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 mt-8">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage <= 1 || loading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+              <div className="mt-8">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  disabled={loading}
+                  showFirstLast={true}
+                  maxVisiblePages={7}
+                />
 
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={
-                          currentPage === pageNum ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        disabled={loading}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
+                {/* Sideinformasjon */}
+                <div className="flex justify-center items-center mt-4 text-sm text-muted-foreground">
+                  <span>
+                    Side {currentPage}
+                    {totalProducts > 0 && <> • Totalt {totalProducts.toLocaleString()} produkter</>}
+                  </span>
                 </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage >= totalPages || loading}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
               </div>
             )}
           </div>
         </div>
       </motion.div>
     </div>
-  );
+  )
 }
