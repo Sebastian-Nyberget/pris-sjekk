@@ -94,7 +94,7 @@ export function ProductCard({
             </div>
           )}
 
-          <Link href={`/products/${product.id}`} className="w-full">
+          <Link href={`/produkter/${product.id}`} className="w-full">
             <Button className="w-full mt-2">Se detaljer</Button>
           </Link>
         </CardFooter>

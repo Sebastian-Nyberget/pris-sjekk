@@ -15,6 +15,7 @@ import { Pagination } from "@/components/pagination"
 import { fetchProducts, searchProducts, type Product, type ApiResponse, fallbackProducts } from "@/lib/product-data"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useBookmarks } from "@/hooks/use-bookmarks"
+import { useUser } from "@clerk/nextjs"
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -27,9 +28,11 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalProducts, setTotalProducts] = useState(0)
   const { bookmarkedProducts, toggleBookmark } = useBookmarks()
+  const { isSignedIn } = useUser()
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
+  // Load products
   const loadProducts = useCallback(async (page = 1, search?: string) => {
     setLoading(true)
     setError(null)
@@ -45,10 +48,12 @@ export default function ProductsPage() {
 
       setProducts(response.data || [])
 
+      // Handle pagination metadata if available
       if (response.meta) {
         setTotalPages(response.meta.last_page || 1)
         setTotalProducts(response.meta.total || 0)
       } else {
+        // Estimate pagination if no meta data
         setTotalPages(response.data.length === 50 ? page + 1 : page)
         setTotalProducts(response.data.length)
       }
@@ -63,18 +68,19 @@ export default function ProductsPage() {
     }
   }, [])
 
+  // Initial load
   useEffect(() => {
     loadProducts(1)
   }, [loadProducts])
 
-  // Søkefunksjon
+  // Handle search
   useEffect(() => {
     if (debouncedSearchQuery !== searchQuery) return
     setCurrentPage(1)
     loadProducts(1, debouncedSearchQuery)
   }, [debouncedSearchQuery, loadProducts, searchQuery])
 
-  // Håndtere sider
+  // Handle page change
   const handlePageChange = (page: number) => {
     if (page === currentPage || loading) return
 
@@ -90,13 +96,14 @@ export default function ProductsPage() {
     }
   }
 
-  // Hente kategorier og butikker for filtrering
+  // Get unique categories and stores from current products
   const categories = [
     "all",
     ...new Set((products || []).flatMap((product) => (product.category || []).map((cat) => cat.name))),
   ]
   const stores = ["all", ...new Set((products || []).map((product) => product.store?.name).filter(Boolean))]
 
+  // Filter products based on category and store (client-side filtering)
   const filteredProducts = (products || []).filter((product) => {
     const categoryMatch =
       selectedCategory === "all" || (product.category || []).some((cat) => cat.name === selectedCategory)
@@ -269,7 +276,14 @@ export default function ProductsPage() {
                       <ProductCard
                         product={product}
                         isBookmarked={bookmarkedProducts.includes(product.id)}
-                        onToggleBookmark={() => toggleBookmark(product.id)}
+                        onToggleBookmark={() => {
+                          if (!isSignedIn) {
+                            // Could show a sign-in modal or toast here
+                            alert("Logg inn for å bokmerke produkter")
+                            return
+                          }
+                          toggleBookmark(product.id)
+                        }}
                       />
                     </motion.div>
                   ))}
@@ -320,7 +334,14 @@ export default function ProductsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => toggleBookmark(product.id)}
+                              onClick={() => {
+                                if (!isSignedIn) {
+                                  // Could show a sign-in modal or toast here
+                                  alert("Logg inn for å bokmerke produkter")
+                                  return
+                                }
+                                toggleBookmark(product.id)
+                              }}
                               className={bookmarkedProducts.includes(product.id) ? "text-primary" : ""}
                             >
                               <Bookmark

@@ -60,7 +60,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <Link href="/products">
+                <Link href="/produkter">
                   <Button
                     size="lg"
                     className="bg-gradient-to-r from-blue-800 to-blue-300 text-white"
@@ -178,7 +178,7 @@ export default function Home() {
               </p>
             </div>
             <SignedIn>
-              <Link href="/products">
+              <Link href="/produkter">
                 <Button
                   size="lg"
                   className="bg-gradient-to-r from-blue-800 to-blue-400 text-white"
